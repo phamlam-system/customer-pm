@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MDC · Cổng khách hàng</title>
+<style>
+  :root{
+    --brass:#B08D57; --brass-deep:#8A6D3B; --brass-soft:#F3EAD9;
+    --ink:#1E2329; --ink-soft:#5A6470; --ink-faint:#9AA3AD;
+    --line:#E7E3DA; --line-strong:#D8D2C6; --paper:#FBF9F4; --card:#FFFFFF;
+    --ok:#2E7D32; --ok-bg:#E7F3E8; --warn:#B26A00; --warn-bg:#FBEFD9; --bad:#B23A2E; --bad-bg:#FBE9E7;
+    --r:16px; --r-sm:10px; --shadow:0 6px 22px rgba(30,35,41,.08);
+    font-family:Arial, "Segoe UI", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:0 14px}
+  .hide{display:none!important}
+  button{font-family:inherit;cursor:pointer}
+  a{color:var(--brass-deep)}
+
+  #login{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 18px;
+    background:linear-gradient(160deg,#2B2016 0%,#3A2C1B 45%,#1E2329 100%);color:#fff;text-align:center}
+  .logo{width:96px;height:96px;border-radius:50%;border:2px solid var(--brass);display:flex;align-items:center;justify-content:center;
+    font-size:30px;font-weight:800;color:var(--brass);letter-spacing:1px;margin-bottom:18px;background:rgba(0,0,0,.2)}
+  #login h1{font-size:22px;font-weight:700;letter-spacing:.5px}
+  #login .sub{color:#D8C9AE;font-size:13.5px;margin:6px 0 26px;max-width:340px}
+  .card-login{background:#fff;color:var(--ink);border-radius:var(--r);padding:22px 18px;width:100%;max-width:360px;box-shadow:var(--shadow);text-align:left}
+  .card-login label{font-size:12.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px}
+  .card-login input{width:100%;padding:13px 14px;margin-top:7px;border:1.5px solid var(--line-strong);border-radius:var(--r-sm);font-size:16px;background:var(--paper)}
+  .card-login input:focus{outline:none;border-color:var(--brass);box-shadow:0 0 0 3px var(--brass-soft)}
+  .btn-main{width:100%;margin-top:16px;padding:14px;border:none;border-radius:var(--r-sm);background:linear-gradient(90deg,var(--brass),var(--brass-deep));color:#fff;font-size:15.5px;font-weight:700}
+  .btn-main:disabled{opacity:.6}
+  .err{color:var(--bad);font-size:13px;margin-top:12px;min-height:18px}
+  #login .foot{color:#9C8B70;font-size:11.5px;margin-top:22px}
+
+  header.top{position:sticky;top:0;z-index:20;background:#231A11;color:#fff;padding:12px 0}
+  header.top .wrap{display:flex;align-items:center;gap:12px}
+  .brand{display:flex;align-items:center;gap:9px}
+  .brand .b{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--brass);display:flex;align-items:center;justify-content:center;color:var(--brass);font-weight:800;font-size:14px}
+  .brand .t{font-size:13px;line-height:1.15}.brand .t b{font-size:14px;letter-spacing:.5px}
+  .top .who{margin-left:auto;text-align:right;font-size:12px}.top .who b{font-size:13px}
+  .top .lo{background:transparent;border:1px solid #5a4b36;color:#E9DCC4;border-radius:8px;padding:6px 10px;font-size:12px;margin-left:10px}
+
+  .sumbar{background:var(--card);border-bottom:1px solid var(--line);box-shadow:var(--shadow)}
+  .sum3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line)}
+  .sum3 .c{background:var(--card);padding:13px 12px;text-align:center}
+  .sum3 .c .l{font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+  .sum3 .c .v{font-size:17px;font-weight:800;margin-top:3px}
+  .sum3 .c .v.ok{color:var(--ok)} .sum3 .c .v.warn{color:var(--warn)}
+
+  .projpick{display:flex;gap:8px;overflow-x:auto;padding:12px 0 2px}
+  .projpick button{flex:none;padding:8px 14px;border:1px solid var(--line-strong);background:var(--card);border-radius:20px;font-size:13px;color:var(--ink-soft);white-space:nowrap}
+  .projpick button.on{background:var(--brass);color:#fff;border-color:var(--brass-deep);font-weight:700}
+
+  .phead{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin:12px 0}
+  .phead h2{font-size:18px;font-weight:800}
+  .phead .meta{color:var(--ink-soft);font-size:13px;margin-top:3px}
+  .ring{--p:0;width:76px;height:76px;border-radius:50%;flex:none;background:conic-gradient(var(--brass) calc(var(--p)*1%), var(--line) 0);display:flex;align-items:center;justify-content:center;position:relative}
+  .ring::before{content:"";position:absolute;inset:8px;background:var(--card);border-radius:50%}
+  .ring span{position:relative;font-weight:800;font-size:17px;color:var(--brass-deep)}
+  .phead .row{display:flex;gap:14px;align-items:center}.phead .row .info{min-width:0;flex:1}
+  .stage{margin-top:12px;background:var(--paper);border-radius:var(--r-sm);padding:10px 12px;font-size:13px}.stage b{color:var(--brass-deep)}
+
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;position:sticky;top:58px;background:var(--paper);z-index:10}
+  .tabs button{flex:none;padding:8px 13px;border:1px solid var(--line-strong);background:var(--card);border-radius:8px;font-size:13px;color:var(--ink-soft)}
+  .tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+  .card h3{font-size:14px;font-weight:800;margin-bottom:10px}
+  .stg{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}.stg:first-of-type{border-top:none}
+  .stg .nm{flex:1;font-size:13.5px;font-weight:600}.stg .sub{font-size:11.5px;color:var(--ink-faint);font-weight:400}
+  .bar{width:96px;height:8px;border-radius:5px;background:var(--line);overflow:hidden;flex:none}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--brass),var(--brass-deep))}.bar i.full{background:var(--ok)}
+  .pc{font-size:12.5px;font-weight:700;width:38px;text-align:right;flex:none}
+
+  .grid-ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+  .grid-ph a{display:block;position:relative;aspect-ratio:1;border-radius:var(--r-sm);overflow:hidden;background:var(--paper);border:1px solid var(--line)}
+  .grid-ph img{width:100%;height:100%;object-fit:cover;display:block}
+  .grid-ph .cap{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff;font-size:9.5px;padding:10px 5px 3px}
+
+  .pay{padding:11px 0;border-top:1px solid var(--line)}.pay:first-of-type{border-top:none}
+  .pay .top2{display:flex;align-items:flex-start;gap:10px}
+  .pay .pn{flex:1;min-width:0}.pay .pn b{font-size:13.5px}.pay .pn .d{font-size:11.5px;color:var(--ink-soft)}
+  .pay .amt{text-align:right;flex:none}.pay .amt .big{font-weight:800;font-size:13.5px}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .tag.ok{background:var(--ok-bg);color:var(--ok)} .tag.warn{background:var(--warn-bg);color:var(--warn)} .tag.bad{background:var(--bad-bg);color:var(--bad)} .tag.mut{background:var(--paper);color:var(--ink-soft)}
+
+  .doc{display:flex;align-items:center;gap:11px;padding:10px 0;border-top:1px solid var(--line)}.doc:first-of-type{border-top:none}
+  .doc .ic{width:34px;height:34px;border-radius:8px;background:var(--brass-soft);color:var(--brass-deep);display:flex;align-items:center;justify-content:center;font-size:15px;flex:none}
+  .doc .dn{flex:1;min-width:0}.doc .dn b{font-size:13.5px}.doc .dn .d{font-size:11.5px;color:var(--ink-soft)}
+
+  /* xác nhận / ký */
+  .cf-row{margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .cf-btn{padding:7px 13px;border:1px solid var(--brass);background:var(--brass-soft);color:var(--brass-deep);border-radius:20px;font-size:12.5px;font-weight:700}
+  .cf-btn:active{transform:translateY(1px)}
+  .cf-done{font-size:12px;color:var(--ok);font-weight:700;background:var(--ok-bg);padding:5px 11px;border-radius:20px}
+
+  .empty{text-align:center;color:var(--ink-faint);font-size:13px;padding:26px 12px}
+  .foot{text-align:center;color:var(--ink-faint);font-size:11.5px;padding:22px 0 34px}
+
+  /* modal xác nhận */
+  .ov{position:fixed;inset:0;background:rgba(20,15,8,.55);display:none;align-items:flex-end;justify-content:center;z-index:60}
+  .ov.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:20px 18px 26px;box-shadow:0 -8px 40px rgba(0,0,0,.25);animation:up .2s ease}
+  @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+  .sheet h3{font-size:17px;font-weight:800}
+  .sheet .obj{font-size:13.5px;color:var(--ink-soft);margin:4px 0 16px}
+  .opt{width:100%;padding:14px;border-radius:var(--r-sm);font-size:14.5px;font-weight:700;border:1.5px solid var(--line-strong);background:var(--card);color:var(--ink);margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .opt.agree{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+  .opt.sign{background:var(--brass-soft);border-color:var(--brass);color:var(--brass-deep)}
+  .opt.cancel{background:transparent;border:none;color:var(--ink-faint);font-weight:600;margin-top:2px}
+  #signArea{margin-top:4px}
+  .sigwrap{border:1.5px dashed var(--line-strong);border-radius:var(--r-sm);background:#fff;position:relative}
+  #sigPad{width:100%;height:170px;display:block;touch-action:none}
+  .sighint{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;color:var(--ink-faint);font-size:12.5px;pointer-events:none}
+  .sigbar{display:flex;gap:8px;margin-top:10px}
+  .sigbar .clr{flex:none;padding:12px 16px;border:1px solid var(--line-strong);background:var(--card);border-radius:var(--r-sm);font-size:13.5px;color:var(--ink-soft)}
+  .sigbar .send{flex:1;padding:13px;border:none;border-radius:var(--r-sm);background:linear-gradient(90deg,var(--brass),var(--brass-deep));color:#fff;font-weight:700;font-size:14.5px}
+
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#231A11;color:#fff;padding:11px 18px;border-radius:12px;font-size:13.5px;opacity:0;transition:.25s;z-index:80;box-shadow:var(--shadow);max-width:90vw;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%)}
+  .load{text-align:center;padding:60px 20px;color:var(--ink-soft)}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="logo">MDC</div>
+  <h1>CỔNG KHÁCH HÀNG</h1>
+  <div class="sub">Mộc Đông Châu · Thiết kế – Sản xuất – Thi công nội thất. Nhập số điện thoại đã đăng ký để xem tiến độ dự án của bạn.</div>
+  <div class="card-login">
+    <label for="sdt">Số điện thoại</label>
+    <input id="sdt" type="tel" inputmode="tel" placeholder="Vd: 0905 123 456" autocomplete="tel">
+    <button class="btn-main" id="btnLogin" onclick="doLogin()">Xem dự án của tôi</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+  <div class="foot">Cần hỗ trợ? Liên hệ MDC · Hotline / Zalo của quản lý dự án.</div>
+</div>
+
+<div id="app" class="hide">
+  <header class="top"><div class="wrap">
+    <div class="brand"><div class="b">MDC</div><div class="t"><b>MỘC ĐÔNG CHÂU</b><br>Cổng khách hàng</div></div>
+    <div class="who"><b id="whoName">—</b><br><span id="whoPhone" style="color:#C9B48F"></span></div>
+    <button class="lo" onclick="logout()">Đổi số</button>
+  </div></header>
+  <div class="sumbar"><div class="wrap"><div class="sum3" id="sum3"></div></div></div>
+  <div class="wrap">
+    <div class="projpick" id="projpick"></div>
+    <div id="pbody"></div>
+    <div class="foot">Số liệu cập nhật trực tiếp từ hệ thống quản lý dự án MDC.<br><span id="capNhat"></span></div>
+  </div>
+</div>
+
+<!-- Modal xác nhận / ký -->
+<div class="ov" id="cfOv">
+  <div class="sheet">
+    <h3 id="cfTitle">Xác nhận</h3>
+    <div class="obj" id="cfObj"></div>
+    <div id="cfOpts">
+      <button class="opt agree" onclick="submitConfirm('Đồng ý','')">✔ Tôi đã xem &amp; đồng ý</button>
+      <button class="opt sign" onclick="showSign(true)">✍ Ký xác nhận</button>
+      <button class="opt cancel" onclick="closeConfirm()">Để sau</button>
+    </div>
+    <div id="signArea" class="hide">
+      <div class="sigwrap"><canvas id="sigPad"></canvas><div class="sighint" id="sigHint">Ký tên vào ô này</div></div>
+      <div class="sigbar"><button class="clr" onclick="clearSign()">Xoá</button><button class="send" onclick="submitConfirm('Ký', sigData())">Gửi chữ ký &amp; xác nhận</button></div>
+      <button class="opt cancel" onclick="closeConfirm()">Huỷ</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbxamtecKswoDZh4kX1xTlco_-319E4dKEOBjrLwpjS541HVI-kW1AxNsquLBdMJ55gk/exec';
+(function(){ var q=new URLSearchParams(location.search); if(q.get('api')) API=q.get('api'); })();
+var DATA=null, CURDA=0, CURTAB='tiendo', CONF={}, PENDING=null, SIGN=null;
+var IS_DEMO=(new URLSearchParams(location.search)).get('demo');
+
+function fmtTr(n){ n=Number(n)||0; if(Math.abs(n)>=1e9) return (n/1e9).toFixed(2).replace(/\.?0+$/,'')+' tỷ'; if(Math.abs(n)>=1e6) return Math.round(n/1e6)+' tr'; return n.toLocaleString('vi-VN'); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function daysLeft(d){ if(!d) return null; var t=new Date(d); if(isNaN(t)) return null; var n=new Date(); n.setHours(0,0,0,0); return Math.round((t-n)/864e5); }
+function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(window.__tt); window.__tt=setTimeout(function(){t.classList.remove('show');},2800); }
+
+function doLogin(){
+  var sdt=(document.getElementById('sdt').value||'').trim();
+  var err=document.getElementById('loginErr'); err.textContent='';
+  if(sdt.replace(/[^0-9]/g,'').length<8){ err.textContent='Số điện thoại chưa hợp lệ.'; return; }
+  var btn=document.getElementById('btnLogin'); btn.disabled=true; btn.textContent='Đang kiểm tra…';
+  var done=function(j){
+    btn.disabled=false; btn.textContent='Xem dự án của tôi';
+    if(!j || !j.ok){ err.textContent=(j&&j.error)||'Không kết nối được hệ thống. Thử lại sau.'; return; }
+    if(!j.found){ err.textContent='Không tìm thấy dự án cho số điện thoại này. Vui lòng kiểm tra lại hoặc liên hệ MDC.'; return; }
+    DATA=j; try{ sessionStorage.setItem('mdc_portal_sdt', sdt); }catch(e){}
+    renderApp();
+  };
+  if(IS_DEMO){ done(DEMO()); return; }
+  fetch(API+'?app=pm&action=getPortal&sdt='+encodeURIComponent(sdt))
+    .then(function(r){return r.json();}).then(done)
+    .catch(function(){ btn.disabled=false; btn.textContent='Xem dự án của tôi'; err.textContent='Không kết nối được. Kiểm tra mạng rồi thử lại.'; });
+}
+function logout(){ try{ sessionStorage.removeItem('mdc_portal_sdt'); }catch(e){} DATA=null; document.getElementById('app').classList.add('hide'); document.getElementById('login').classList.remove('hide'); document.getElementById('sdt').value=''; }
+
+function renderApp(){
+  document.getElementById('login').classList.add('hide');
+  document.getElementById('app').classList.remove('hide');
+  document.getElementById('whoName').textContent=DATA.khach.ten||'Quý khách';
+  document.getElementById('whoPhone').textContent=DATA.khach.sdt||'';
+  var f=DATA.taiChinh||{};
+  document.getElementById('sum3').innerHTML=
+    '<div class="c"><div class="l">Giá trị hợp đồng</div><div class="v">'+fmtTr(f.tongHD)+'</div></div>'
+    +'<div class="c"><div class="l">Đã thanh toán</div><div class="v ok">'+fmtTr(f.daThu)+'</div></div>'
+    +'<div class="c"><div class="l">Còn lại</div><div class="v warn">'+fmtTr(f.conLai)+'</div></div>';
+  document.getElementById('capNhat').textContent=DATA.capNhat?('Cập nhật: '+DATA.capNhat):'';
+  CONF={}; (DATA.xacNhan||[]).forEach(function(x){ CONF[x.loai+'|'+x.maDoiTuong]={hinhThuc:x.hinhThuc,thoiGian:x.thoiGian}; });
+  CURDA=0;
+  var pp=document.getElementById('projpick');
+  pp.innerHTML = DATA.duAn.length>1 ? DATA.duAn.map(function(p,i){return '<button class="'+(i===0?'on':'')+'" onclick="pickDA('+i+')">'+esc(p.ten)+'</button>';}).join('') : '';
+  renderProject();
+}
+function pickDA(i){ CURDA=i; CURTAB='tiendo'; document.querySelectorAll('#projpick button').forEach(function(b,k){b.classList.toggle('on',k===i);}); renderProject(); window.scrollTo(0,0); }
+
+function renderProject(){
+  var p=DATA.duAn[CURDA]; if(!p){ document.getElementById('pbody').innerHTML=''; return; }
+  var dl=daysLeft(p.ketThucDK);
+  var eta = p.ketThucDK ? (dl===null?'':(dl>=0?'Dự kiến bàn giao: '+esc(p.ketThucDK)+' (còn '+dl+' ngày)':'Quá hạn dự kiến '+Math.abs(dl)+' ngày')) : '';
+  var h='<div class="phead"><div class="row">'
+    +'<div class="ring" style="--p:'+(p.tienDo||0)+'"><span>'+(p.tienDo||0)+'%</span></div>'
+    +'<div class="info"><h2>'+esc(p.ten)+'</h2>'
+    +'<div class="meta">'+(p.diaChi?'📍 '+esc(p.diaChi):'')+'</div>'
+    +'<div class="meta">'+(p.loaiHinh?esc(p.loaiHinh)+' · ':'')+(p.phuTrach?'PM: '+esc(p.phuTrach):'')+'</div></div></div>'
+    +'<div class="stage">Giai đoạn hiện tại: <b>'+esc(p.giaiDoan||'—')+'</b>'+(eta?'<div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px">'+eta+'</div>':'')+'</div></div>';
+  var tabs=[['tiendo','Tiến độ'],['anh','Hình ảnh ('+(p.anh?p.anh.length:0)+')'],['thanhtoan','Thanh toán'],['hoso','Hồ sơ ('+(p.hoso?p.hoso.length:0)+')']];
+  h+='<div class="tabs">'+tabs.map(function(t){return '<button class="'+(CURTAB===t[0]?'on':'')+'" onclick="pickTab(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+'</div>';
+  h+='<div id="tabbody">'+renderTab(p)+'</div>';
+  document.getElementById('pbody').innerHTML=h;
+}
+function pickTab(t){ CURTAB=t; var p=DATA.duAn[CURDA];
+  var idx={tiendo:0,anh:1,thanhtoan:2,hoso:3}[t]; var bs=document.querySelectorAll('.tabs button');
+  bs.forEach(function(b){b.classList.remove('on');}); if(bs[idx]) bs[idx].classList.add('on');
+  document.getElementById('tabbody').innerHTML=renderTab(p);
+}
+function confCtrl(loai,id){
+  var c=CONF[loai+'|'+id];
+  if(c) return '<span class="cf-done">✓ '+(c.hinhThuc==='Ký'?'Đã ký':'Đã đồng ý')+(c.thoiGian?' · '+esc(c.thoiGian):'')+'</span>';
+  return '<button class="cf-btn" onclick="openConfirm(\''+loai+'\',\''+esc(id)+'\')">Xác nhận / Ký</button>';
+}
+function renderTab(p){
+  if(CURTAB==='anh'){
+    if(!p.anh||!p.anh.length) return '<div class="card"><div class="empty">Chưa có hình ảnh hiện trường được chia sẻ.</div></div>';
+    return '<div class="card"><h3>Hình ảnh công trình</h3><div class="grid-ph">'
+      +p.anh.map(function(a){return '<a href="'+esc(a.url)+'" target="_blank" rel="noopener"><img loading="lazy" src="'+esc(a.url)+'" alt=""><span class="cap">'+esc(a.ngay||'')+'</span></a>';}).join('')+'</div></div>';
+  }
+  if(CURTAB==='thanhtoan'){
+    if(!p.dotThu||!p.dotThu.length) return '<div class="card"><div class="empty">Chưa có lịch thanh toán.</div></div>';
+    return '<div class="card"><h3>Lịch thanh toán</h3>'+p.dotThu.map(function(d){
+      var done=d.conLai<=0; var dl=daysLeft(d.ngayDenHan);
+      var tag=done?'<span class="tag ok">Đã thu đủ</span>':(dl!==null&&dl<0?'<span class="tag bad">Quá hạn</span>':(dl!==null&&dl<=7?'<span class="tag warn">Sắp đến hạn</span>':'<span class="tag mut">Chưa đến hạn</span>'));
+      return '<div class="pay"><div class="top2"><div class="pn"><b>'+esc(d.ten)+'</b>'+(d.loaiHD?' <span class="tag mut">'+esc(d.loaiHD)+'</span>':'')+'<div class="d">'+(d.ngayDenHan?'Hạn: '+esc(d.ngayDenHan):'')+(d.daThu>0&&!done?' · đã thu '+fmtTr(d.daThu):'')+'</div></div>'
+        +'<div class="amt"><div class="big">'+fmtTr(d.giaTri)+'</div>'+tag+'</div></div>'
+        +'<div class="cf-row">'+confCtrl('Đợt thu', d.id||d.ten)+'</div></div>';
+    }).join('')+'</div>';
+  }
+  if(CURTAB==='hoso'){
+    if(!p.hoso||!p.hoso.length) return '<div class="card"><div class="empty">Chưa có hồ sơ được chia sẻ.</div></div>';
+    return '<div class="card"><h3>Hồ sơ &amp; tài liệu</h3>'+p.hoso.map(function(d){
+      return '<div class="doc"><div class="ic">📄</div><div class="dn"><b>'+esc(d.tieude)+'</b><div class="d">'+esc(d.loai||'')+(d.phienban?' · '+esc(d.phienban):'')+(d.ngay?' · '+esc(d.ngay):'')+'</div>'
+        +'<div class="cf-row">'+confCtrl('Hồ sơ', d.id||d.tieude)+'</div></div></div>';
+    }).join('')+'</div>';
+  }
+  if(!p.giaiDoanList||!p.giaiDoanList.length) return '<div class="card"><div class="empty">Chưa có dữ liệu tiến độ chi tiết. Tổng tiến độ: <b>'+(p.tienDo||0)+'%</b></div></div>';
+  return '<div class="card"><h3>Tiến độ theo giai đoạn</h3>'+p.giaiDoanList.map(function(g){
+    var pct=g.pct==null?0:g.pct;
+    return '<div class="stg"><div class="nm">'+esc(g.ten)+'<div class="sub">'+g.xong+'/'+g.tong+' đầu việc hoàn thành</div></div>'
+      +'<div class="bar"><i class="'+(pct>=100?'full':'')+'" style="width:'+pct+'%"></i></div><div class="pc">'+pct+'%</div></div>';
+  }).join('')+'</div>';
+}
+
+// ===== XÁC NHẬN / KÝ =====
+function openConfirm(loai,id){
+  var p=DATA.duAn[CURDA];
+  var arr = loai==='Đợt thu'?p.dotThu:p.hoso;
+  var it=(arr||[]).filter(function(x){return String(x.id||x.ten||x.tieude)===String(id);})[0];
+  PENDING={loai:loai,id:id,doiTuong: it?(it.ten||it.tieude||''):''};
+  document.getElementById('cfTitle').textContent = loai==='Đợt thu'?'Xác nhận đợt thanh toán':'Xác nhận / Ký hồ sơ';
+  document.getElementById('cfObj').textContent = PENDING.doiTuong;
+  showSign(false);
+  document.getElementById('cfOv').classList.add('open');
+}
+function closeConfirm(){ document.getElementById('cfOv').classList.remove('open'); PENDING=null; }
+function showSign(on){
+  document.getElementById('cfOpts').classList.toggle('hide', on);
+  document.getElementById('signArea').classList.toggle('hide', !on);
+  if(on) setTimeout(initSign, 30);
+}
+function initSign(){
+  var c=document.getElementById('sigPad'); if(!c) return;
+  var rect=c.getBoundingClientRect(); c.width=Math.max(300,rect.width)*2; c.height=170*2;
+  var ctx=c.getContext('2d'); ctx.scale(2,2); ctx.lineWidth=2.4; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.strokeStyle='#1E2329';
+  SIGN={drawn:false,ctx:ctx,c:c,draw:false,lx:0,ly:0};
+  var pos=function(e){var r=c.getBoundingClientRect();var t=(e.touches&&e.touches[0])?e.touches[0]:e;return {x:t.clientX-r.left,y:t.clientY-r.top};};
+  var start=function(e){e.preventDefault();SIGN.draw=true;var p=pos(e);SIGN.lx=p.x;SIGN.ly=p.y;document.getElementById('sigHint').style.display='none';};
+  var move=function(e){if(!SIGN.draw)return;e.preventDefault();var p=pos(e);ctx.beginPath();ctx.moveTo(SIGN.lx,SIGN.ly);ctx.lineTo(p.x,p.y);ctx.stroke();SIGN.lx=p.x;SIGN.ly=p.y;SIGN.drawn=true;};
+  var end=function(){SIGN.draw=false;};
+  c.onmousedown=start;c.onmousemove=move;window.addEventListener('mouseup',end);
+  c.addEventListener('touchstart',start,{passive:false});c.addEventListener('touchmove',move,{passive:false});c.addEventListener('touchend',end);
+}
+function clearSign(){ if(SIGN&&SIGN.ctx){ SIGN.ctx.clearRect(0,0,SIGN.c.width,SIGN.c.height); SIGN.drawn=false; document.getElementById('sigHint').style.display=''; } }
+function sigData(){ return (SIGN&&SIGN.drawn)?SIGN.c.toDataURL('image/png'):''; }
+function submitConfirm(hinhThuc, chuKy){
+  if(!PENDING) return;
+  if(hinhThuc==='Ký' && !chuKy){ toast('Vui lòng ký vào ô trước khi gửi.'); return; }
+  var body={app:'pm',action:'portalConfirm',data:{sdt:DATA.khach.sdt,maDA:(DATA.duAn[CURDA]||{}).maDA,loai:PENDING.loai,maDoiTuong:PENDING.id,doiTuong:PENDING.doiTuong,hinhThuc:hinhThuc,chuKy:chuKy||''}};
+  var key=PENDING.loai+'|'+PENDING.id;
+  var after=function(j){ if(j&&j.ok){ CONF[key]={hinhThuc:hinhThuc,thoiGian:j.thoiGian||''}; closeConfirm(); renderProject(); toast('✓ Cảm ơn! Đã ghi nhận xác nhận của bạn.'); }
+    else { toast((j&&j.error)||'Không gửi được, thử lại.'); } };
+  if(IS_DEMO){ after({ok:true,thoiGian:'vừa xong'}); return; }
+  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
+    .then(function(r){return r.json();}).then(after)
+    .catch(function(){ toast('Không kết nối được. Thử lại sau.'); });
+}
+
+(function(){ try{ var s=sessionStorage.getItem('mdc_portal_sdt'); if(s){ document.getElementById('sdt').value=s; } }catch(e){} })();
+
+function DEMO(){ return {ok:true,found:true,khach:{ten:'Anh Lê Tuấn Anh',sdt:'0905 123 456'},soDuAn:1,
+  taiChinh:{tongHD:1250000000,daThu:750000000,conLai:500000000},capNhat:'22/08/2026 15:20',
+  xacNhan:[{loai:'Đợt thu',maDoiTuong:'TT1',hinhThuc:'Đồng ý',thoiGian:'01/06/2026'}],
+  duAn:[{maDA:'DA2026-002',ten:'Nhà phố Thuận Hóa — Nội thất trọn gói',giaiDoan:'Thi công lắp đặt',tienDo:62,
+    giaTriHD:1250000000,phuTrach:'Châu Văn Đông',diaChi:'12 Nguyễn Huệ, TP Huế',loaiHinh:'Trọn gói',batDau:'2026-06-01',ketThucDK:'2026-09-15',
+    giaiDoanList:[{ten:'Tiếp nhận & Báo giá',tong:3,xong:3,pct:100},{ten:'Thiết kế concept',tong:4,xong:4,pct:100},{ten:'Thiết kế kỹ thuật',tong:5,xong:4,pct:80},{ten:'Sản xuất tại xưởng',tong:6,xong:3,pct:50},{ten:'Thi công lắp đặt',tong:8,xong:2,pct:25},{ten:'Nghiệm thu',tong:3,xong:0,pct:0}],
+    anh:[{url:'https://picsum.photos/seed/mdc1/400',ngay:'2026-08-18'},{url:'https://picsum.photos/seed/mdc2/400',ngay:'2026-08-15'},{url:'https://picsum.photos/seed/mdc3/400',ngay:'2026-08-12'},{url:'https://picsum.photos/seed/mdc4/400',ngay:'2026-08-08'}],
+    dotThu:[{id:'TT1',ten:'Đợt 1 — Tạm ứng ký HĐ',giaTri:375000000,daThu:375000000,conLai:0,ngayDenHan:'2026-06-01',trangThai:'Đã thu',loaiHD:'Thi công'},
+      {id:'TT2',ten:'Đợt 2 — Sản xuất 70%',giaTri:375000000,daThu:375000000,conLai:0,ngayDenHan:'2026-07-20',trangThai:'Đã thu',loaiHD:'Thi công'},
+      {id:'TT3',ten:'Đợt 3 — Lắp đặt',giaTri:312500000,daThu:0,conLai:312500000,ngayDenHan:'2026-08-25',trangThai:'Chưa thu',loaiHD:'Thi công'},
+      {id:'TT4',ten:'Đợt 4 — Nghiệm thu bàn giao',giaTri:187500000,daThu:0,conLai:187500000,ngayDenHan:'2026-09-15',trangThai:'Chưa thu',loaiHD:'Thi công'}],
+    hoso:[{id:'TL1',tieude:'Hợp đồng thi công nội thất',loai:'Hợp đồng',ngay:'2026-06-01',phienban:'v1'},
+      {id:'TL2',tieude:'Bản vẽ triển khai kỹ thuật',loai:'Bản vẽ',ngay:'2026-07-05',phienban:'v2'},
+      {id:'TL3',tieude:'Biên bản nghiệm thu sản xuất đợt 1',loai:'Nghiệm thu',ngay:'2026-08-10',phienban:'v1'}]}]};
+}
+</script>
+</body>
+</html>
