@@ -378,7 +378,7 @@ function renderProject(){
     +'<div class="meta">'+(p.loaiHinh?'<span>🏷 '+esc(p.loaiHinh)+'</span>':'')+(p.phuTrach?'<span>· 👤 PM: '+esc(p.phuTrach)+'</span>':'')+'</div></div></div>'
     +'<div class="stage">Giai đoạn hiện tại: <b>'+esc(p.giaiDoan||nextStageName(p)||'—')+'</b>'
     +(etaTxt?'<div class="eta '+etaCls+'">'+etaTxt+'</div>':'')+'</div></div>';
-  var na=p.anh?p.anh.length:0, nh=p.hoso?p.hoso.length:0;
+  var na=p.anh?p.anh.length:0, nh=(p.hoso?p.hoso.length:0)+(p.bienban?p.bienban.length:0);
   var tabs=[['tongquan','Tổng quan'],['tiendo','Tiến độ'],['anh','Hình ảnh'+(na?' ('+na+')':'')],['thanhtoan','Thanh toán'],['hoso','Hồ sơ'+(nh?' ('+nh+')':'')]];
   h+='<div class="tabs">'+tabs.map(function(t){return '<button class="'+(CURTAB===t[0]?'on':'')+'" onclick="pickTab(\''+t[0]+'\')">'+t[1]+'</button>';}).join('')+'</div>';
   h+='<div id="tabbody">'+renderTab(p)+'</div>';
@@ -601,15 +601,28 @@ function renderPayments(p){
 
 /* ---------- DOCS ---------- */
 function renderDocs(p){
-  var hs=p.hoso||[];
-  if(!hs.length) return '<div class="card"><div class="empty"><span class="em">📄</span>Chưa có hồ sơ được chia sẻ.<br>Hợp đồng, bản vẽ, biên bản nghiệm thu sẽ xuất hiện tại đây khi ban hành.</div></div>';
-  var dic={'Hợp đồng':'📝','Bản vẽ':'📐','Nghiệm thu':'✅','Báo giá':'🧾'};
-  return '<div class="card"><h3><span class="ic">📄</span> Hồ sơ &amp; tài liệu<span class="rt">'+hs.length+' mục</span></h3>'+hs.map(function(d){
-    var ic=dic[d.loai]||'📄';
-    return '<div class="doc"><div class="ic">'+ic+'</div><div class="dn"><b>'+esc(d.tieude)+'</b>'
-      +'<div class="d">'+esc(d.loai||'')+(d.phienban?' · '+esc(d.phienban):'')+(d.ngay?' · '+ddmm(d.ngay):'')+'</div>'
-      +'<div class="cf-row">'+confCtrl('Hồ sơ', d.id||d.tieude)+'</div></div></div>';
-  }).join('')+'</div>';
+  var hs=p.hoso||[], bb=p.bienban||[];
+  if(!hs.length && !bb.length) return '<div class="card"><div class="empty"><span class="em">📄</span>Chưa có hồ sơ được chia sẻ.<br>Hợp đồng, bản vẽ, biên bản nghiệm thu sẽ xuất hiện tại đây khi ban hành.</div></div>';
+  var h='';
+  // Biên bản nghiệm thu — khách xem & ký online
+  if(bb.length){
+    h+='<div class="card"><h3><span class="ic">✅</span> Biên bản nghiệm thu<span class="rt">'+bb.length+' biên bản</span></h3>'
+      +bb.map(function(b){
+        return '<div class="doc"><div class="ic">✅</div><div class="dn"><b>'+esc(b.loai||'Nghiệm thu')+(b.doiTuong?' — '+esc(b.doiTuong):'')+'</b>'
+          +'<div class="d">'+(b.ngay?ddmm(b.ngay):'')+(b.trangThai?' · '+esc(b.trangThai):'')+(b.ketLuan?' · '+esc(b.ketLuan):'')+'</div>'
+          +'<div class="cf-row">'+confCtrl('Biên bản', b.id)+'</div></div></div>';
+      }).join('')+'</div>';
+  }
+  if(hs.length){
+    var dic={'Hợp đồng':'📝','Bản vẽ':'📐','Nghiệm thu':'✅','Báo giá':'🧾'};
+    h+='<div class="card"><h3><span class="ic">📄</span> Hồ sơ &amp; tài liệu<span class="rt">'+hs.length+' mục</span></h3>'+hs.map(function(d){
+      var ic=dic[d.loai]||'📄';
+      return '<div class="doc"><div class="ic">'+ic+'</div><div class="dn"><b>'+esc(d.tieude)+'</b>'
+        +'<div class="d">'+esc(d.loai||'')+(d.phienban?' · '+esc(d.phienban):'')+(d.ngay?' · '+ddmm(d.ngay):'')+'</div>'
+        +'<div class="cf-row">'+confCtrl('Hồ sơ', d.id||d.tieude)+'</div></div></div>';
+    }).join('')+'</div>';
+  }
+  return h;
 }
 
 /* ======================= CONFIRM / SIGN ======================= */
@@ -620,10 +633,10 @@ function confCtrl(loai,id){
 }
 function openConfirm(loai,id){
   var p=DATA.duAn[CURDA];
-  var arr = loai==='Đợt thu'?p.dotThu:p.hoso;
+  var arr = loai==='Đợt thu'?p.dotThu:(loai==='Biên bản'?p.bienban:p.hoso);
   var it=(arr||[]).filter(function(x){return String(x.id||x.ten||x.tieude)===String(id);})[0];
-  PENDING={loai:loai,id:id,doiTuong: it?(it.ten||it.tieude||''):''};
-  document.getElementById('cfTitle').textContent = loai==='Đợt thu'?'Xác nhận đợt thanh toán':'Xác nhận / Ký hồ sơ';
+  PENDING={loai:loai,id:id,doiTuong: it?(it.ten||it.tieude||it.doiTuong||it.loai||''):''};
+  document.getElementById('cfTitle').textContent = loai==='Đợt thu'?'Xác nhận đợt thanh toán':(loai==='Biên bản'?'Xác nhận / Ký biên bản nghiệm thu':'Xác nhận / Ký hồ sơ');
   document.getElementById('cfObj').textContent = PENDING.doiTuong;
   showSign(false);
   document.getElementById('cfOv').classList.add('open');
@@ -673,7 +686,7 @@ function submitConfirm(hinhThuc, chuKy){
 /* ======================= DEMO DATA ======================= */
 function DEMO(){ return {ok:true,found:true,khach:{ten:'Anh Lê Tuấn Anh',sdt:'0905 123 456'},soDuAn:1,
   taiChinh:{tongHD:1250000000,daThu:750000000,conLai:500000000},capNhat:'22/08/2026 15:20',
-  xacNhan:[{loai:'Đợt thu',maDoiTuong:'TT1',hinhThuc:'Đồng ý',thoiGian:'01/06/2026'},{loai:'Hồ sơ',maDoiTuong:'TL1',hinhThuc:'Ký',thoiGian:'02/06/2026'}],
+  xacNhan:[{loai:'Đợt thu',maDoiTuong:'TT1',hinhThuc:'Đồng ý',thoiGian:'01/06/2026'},{loai:'Hồ sơ',maDoiTuong:'TL1',hinhThuc:'Ký',thoiGian:'02/06/2026'},{loai:'Biên bản',maDoiTuong:'BB2',hinhThuc:'Ký',thoiGian:'11/08/2026'}],
   duAn:[{maDA:'DA2026-002',ten:'Nhà phố Thuận Hóa — Nội thất trọn gói',giaiDoan:'Thi công lắp đặt',tienDo:62,
     giaTriHD:1250000000,phuTrach:'Châu Văn Đông',diaChi:'12 Nguyễn Huệ, TP Huế',loaiHinh:'Trọn gói',batDau:'2026-06-01',ketThucDK:'2026-09-15',
     giaiDoanList:[
@@ -690,8 +703,9 @@ function DEMO(){ return {ok:true,found:true,khach:{ten:'Anh Lê Tuấn Anh',sdt:
       {id:'TT3',ten:'Đợt 3 — Lắp đặt',giaTri:312500000,daThu:0,conLai:312500000,ngayDenHan:'2026-08-25',trangThai:'Chưa thu',loaiHD:'Thi công'},
       {id:'TT4',ten:'Đợt 4 — Nghiệm thu bàn giao',giaTri:187500000,daThu:0,conLai:187500000,ngayDenHan:'2026-09-15',trangThai:'Chưa thu',loaiHD:'Thi công'}],
     hoso:[{id:'TL1',tieude:'Hợp đồng thi công nội thất',loai:'Hợp đồng',ngay:'2026-06-01',phienban:'v1'},
-      {id:'TL2',tieude:'Bản vẽ triển khai kỹ thuật',loai:'Bản vẽ',ngay:'2026-07-05',phienban:'v2'},
-      {id:'TL3',tieude:'Biên bản nghiệm thu sản xuất đợt 1',loai:'Nghiệm thu',ngay:'2026-08-10',phienban:'v1'}],
+      {id:'TL2',tieude:'Bản vẽ triển khai kỹ thuật',loai:'Bản vẽ',ngay:'2026-07-05',phienban:'v2'}],
+    bienban:[{id:'BB1',loai:'Nghiệm thu bộ phận',doiTuong:'Hệ tủ bếp',ngay:'2026-08-18',ketLuan:'Đạt',trangThai:'Chờ ký'},
+      {id:'BB2',loai:'Nghiệm thu sản xuất',doiTuong:'Sản xuất đợt 1',ngay:'2026-08-10',ketLuan:'Đạt',trangThai:'Đã ký'}],
     hoatDong:[{ngay:'2026-08-18',tieude:'Thi công lắp đặt tủ bếp',noiDung:'Hoàn thành lắp đặt hệ tủ bếp trên và dưới, chờ nghiệm thu.',soAnh:2},
       {ngay:'2026-08-12',tieude:'Giao vật tư đợt 2',noiDung:'Vận chuyển và nghiệm thu vật tư sản xuất tại công trình.',soAnh:2},
       {ngay:'2026-07-30',tieude:'Sản xuất tại xưởng',noiDung:'Đang sản xuất hệ tủ và vách trang trí, tiến độ 50%.',soAnh:2}]}]};
