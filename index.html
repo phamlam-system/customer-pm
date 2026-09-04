@@ -248,6 +248,8 @@
   <div class="card-login">
     <label for="sdt">Số điện thoại</label>
     <input id="sdt" type="tel" inputmode="tel" placeholder="Vd: 0905 123 456" autocomplete="tel" onkeydown="if(event.key==='Enter')doLogin()">
+    <label for="accode" style="margin-top:12px">Mã truy cập <span style="font-weight:400;opacity:.6">(nếu MDC đã cấp)</span></label>
+    <input id="accode" type="text" inputmode="text" placeholder="Bỏ trống nếu chưa được cấp mã" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="btn-main" id="btnLogin" onclick="doLogin()">Xem dự án của tôi</button>
     <div class="err" id="loginErr"></div>
   </div>
@@ -303,6 +305,7 @@
 /* ======================= CONFIG ======================= */
 var API = 'https://script.google.com/macros/s/AKfycbxamtecKswoDZh4kX1xTlco_-319E4dKEOBjrLwpjS541HVI-kW1AxNsquLBdMJ55gk/exec';
 (function(){ var q=new URLSearchParams(location.search); if(q.get('api')) API=q.get('api'); })();
+var TOKEN='MDC-Secure-2026-Kp9Qv3Ls2Tn8w'; /* P0 bảo mật: khớp SECRET_TOKEN backend */
 var DATA=null, CURDA=0, CURTAB='tongquan', CONF={}, PENDING=null, SIGN=null, LBOX={list:[],i:0};
 var IS_DEMO=(new URLSearchParams(location.search)).get('demo');
 
@@ -323,18 +326,20 @@ function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.cl
 /* ======================= LOGIN ======================= */
 function doLogin(){
   var sdt=(document.getElementById('sdt').value||'').trim();
+  var code=((document.getElementById('accode')||{}).value||'').trim();
   var err=document.getElementById('loginErr'); err.textContent='';
   if(sdt.replace(/[^0-9]/g,'').length<8){ err.textContent='Số điện thoại chưa hợp lệ.'; return; }
   var btn=document.getElementById('btnLogin'); btn.disabled=true; btn.textContent='Đang kiểm tra…';
   var done=function(j){
     btn.disabled=false; btn.textContent='Xem dự án của tôi';
     if(!j || !j.ok){ err.textContent=(j&&j.error)||'Không kết nối được hệ thống. Vui lòng thử lại sau.'; return; }
+    if(j.needCode){ err.textContent='Dự án này cần mã truy cập. Vui lòng nhập mã MDC đã cấp cho bạn.'; var ac=document.getElementById('accode'); if(ac){ ac.focus(); } return; }
     if(!j.found){ err.textContent='Không tìm thấy dự án cho số điện thoại này. Vui lòng kiểm tra lại hoặc liên hệ MDC.'; return; }
     DATA=j; try{ sessionStorage.setItem('mdc_portal_sdt', sdt); }catch(e){}
     renderApp();
   };
   if(IS_DEMO){ done(DEMO()); return; }
-  fetch(API+'?app=pm&action=getPortal&sdt='+encodeURIComponent(sdt))
+  fetch(API+'?app=pm&action=getPortal&sdt='+encodeURIComponent(sdt)+'&code='+encodeURIComponent(code)+'&token='+encodeURIComponent(TOKEN))
     .then(function(r){return r.json();}).then(done)
     .catch(function(){ btn.disabled=false; btn.textContent='Xem dự án của tôi'; err.textContent='Không kết nối được. Kiểm tra mạng rồi thử lại.'; });
 }
@@ -664,7 +669,7 @@ function sigData(){ return (SIGN&&SIGN.drawn)?SIGN.c.toDataURL('image/png'):''; 
 function submitConfirm(hinhThuc, chuKy){
   if(!PENDING) return;
   if(hinhThuc==='Ký' && !chuKy){ toast('Vui lòng ký vào ô trước khi gửi.'); return; }
-  var body={app:'pm',action:'portalConfirm',data:{sdt:DATA.khach.sdt,maDA:(DATA.duAn[CURDA]||{}).maDA,loai:PENDING.loai,maDoiTuong:PENDING.id,doiTuong:PENDING.doiTuong,hinhThuc:hinhThuc,chuKy:chuKy||''}};
+  var body={app:'pm',action:'portalConfirm',token:TOKEN,data:{sdt:DATA.khach.sdt,maDA:(DATA.duAn[CURDA]||{}).maDA,loai:PENDING.loai,maDoiTuong:PENDING.id,doiTuong:PENDING.doiTuong,hinhThuc:hinhThuc,chuKy:chuKy||''}};
   var key=PENDING.loai+'|'+PENDING.id;
   var after=function(j){ if(j&&j.ok){ CONF[key]={hinhThuc:hinhThuc,thoiGian:j.thoiGian||''}; closeConfirm(); renderProject(); toast('✓ Cảm ơn! Đã ghi nhận xác nhận của bạn.'); }
     else { toast((j&&j.error)||'Không gửi được, vui lòng thử lại.'); } };
@@ -679,6 +684,7 @@ function submitConfirm(hinhThuc, chuKy){
   var q=new URLSearchParams(location.search);
   var pre=q.get('sdt');
   try{ if(!pre){ var s=sessionStorage.getItem('mdc_portal_sdt'); if(s) pre=s; } }catch(e){}
+  var preCode=q.get('code'); if(preCode){ var _ac=document.getElementById('accode'); if(_ac) _ac.value=preCode; }
   if(pre){ document.getElementById('sdt').value=pre; if(q.get('sdt')||IS_DEMO){ setTimeout(doLogin,60); } }
   if(IS_DEMO && !pre){ document.getElementById('sdt').value='0905 123 456'; setTimeout(doLogin,60); }
 })();
