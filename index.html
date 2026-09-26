@@ -58,6 +58,10 @@
   .sum3 .c .l{font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.3px;font-weight:700}
   .sum3 .c .v{font-size:16.5px;font-weight:800;margin-top:3px}
   .sum3 .c .v.ok{color:var(--ok)} .sum3 .c .v.warn{color:var(--warn)}
+  .sumsplit{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;padding:7px 10px;font-size:11.5px;color:var(--ink-soft);background:var(--card);border-top:1px solid var(--line)}
+  .sumsplit b{color:var(--ink)} .sumsplit .uu{color:var(--ok);font-weight:700}
+  .hdgrp{margin:14px 0 6px;padding:8px 10px;border-radius:8px;background:var(--ok-bg);font-size:12.5px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .hdgrp.tk{background:#EBF3FC} .hdgrp b{font-size:13px}
 
   .projpick{display:flex;gap:8px;overflow-x:auto;padding:12px 0 2px;-webkit-overflow-scrolling:touch}
   .projpick button{flex:none;padding:8px 14px;border:1px solid var(--line-strong);background:var(--card);border-radius:20px;font-size:13px;color:var(--ink-soft);white-space:nowrap}
@@ -358,6 +362,15 @@ function renderApp(){
     '<div class="c"><div class="l">Giá trị hợp đồng</div><div class="v">'+fmtTr(f.tongHD)+'</div></div>'
     +'<div class="c"><div class="l">Đã thanh toán</div><div class="v ok">'+fmtTr(f.daThu)+'</div></div>'
     +'<div class="c"><div class="l">Còn lại</div><div class="v warn">'+fmtTr(f.conLai)+'</div></div>';
+  /* ★ v6.18 — tách HĐ Thiết kế / Thi công */
+  var _old=document.getElementById('sumSplit'); if(_old) _old.remove();
+  if(f.tk && f.tc && (f.tk.n||f.tc.n)){
+    var sp='<div class="sumsplit" id="sumSplit">'
+      +(f.tk.n?'<span>HĐ Thiết kế: <b>'+fmtTr(f.tk.giaTri)+'</b> · đã TT '+fmtTr(f.tk.daThu)+'</span>':'')
+      +(f.tc.n?'<span>HĐ Thi công: <b>'+fmtTr(f.tc.giaTri)+'</b> · đã TT '+fmtTr(f.tc.daThu)+'</span>':'')
+      +(f.uuDai?'<span class="uu">🎁 Ưu đãi miễn phí thiết kế '+fmtTr(f.uuDai)+'</span>':'')+'</div>';
+    document.getElementById('sum3').insertAdjacentHTML('afterend', sp);
+  }
   document.getElementById('capNhat').textContent=DATA.capNhat?('Cập nhật: '+DATA.capNhat):'';
   CONF={}; (DATA.xacNhan||[]).forEach(function(x){ CONF[x.loai+'|'+x.maDoiTuong]={hinhThuc:x.hinhThuc,thoiGian:x.thoiGian}; });
   CURDA=0; CURTAB='tongquan';
@@ -593,10 +606,17 @@ function renderPayments(p){
   h+='<div class="paytotal"><div class="pt-top"><span>Đã thu <b style="color:var(--ok)">'+fmtTr(thu)+'</b></span><span>Tổng <b>'+fmtTr(tot)+'</b></span></div>'
     +'<div class="pbar"><i style="width:'+pct+'%"></i></div>'
     +'<div style="font-size:11px;color:var(--ink-soft);margin-top:6px;text-align:center">Đã thanh toán '+pct+'% giá trị hợp đồng</div></div>';
+  var _nhomTen={TK:'Hợp đồng thiết kế',TC:'Hợp đồng thi công'}, _coNhom=dot.some(function(d){ return d.nhomHD; }), _truoc='';
+  if(_coNhom) dot=dot.slice().sort(function(a,b){ return (a.nhomHD==='TK'?0:1)-(b.nhomHD==='TK'?0:1); });
   h+=dot.map(function(d){
+    var _grp='';
+    if(_coNhom && (d.nhomHD||'TC')!==_truoc){ _truoc=d.nhomHD||'TC'; var _ds=dot.filter(function(x){ return (x.nhomHD||'TC')===_truoc; });
+      var _v=_ds.reduce(function(a,x){return a+(x.giaTri||0);},0), _t=_ds.reduce(function(a,x){return a+(x.daThu||0);},0);
+      _grp='<div class="hdgrp '+(_truoc==='TK'?'tk':'')+'"><b>'+_nhomTen[_truoc]+'</b><span>Đã thanh toán '+fmtTr(_t)+' / '+fmtTr(_v)+'</span></div>'; }
     var done=d.conLai<=0; var dl=daysLeft(d.ngayDenHan);
     var tag=done?'<span class="tag ok">Đã thu đủ</span>':(dl!==null&&dl<0?'<span class="tag bad">Quá hạn</span>':(dl!==null&&dl<=7?'<span class="tag warn">Sắp đến hạn</span>':'<span class="tag mut">Chưa đến hạn</span>'));
-    return '<div class="pay"><div class="top2"><div class="pn"><b>'+esc(d.ten)+'</b>'+(d.loaiHD?' <span class="tag mut">'+esc(d.loaiHD)+'</span>':'')
+    if(d.giamTru && !(d.giaTri>0)) tag='<span class="tag ok">Miễn thu</span>';   /* ★ v6.18 */
+    return _grp+'<div class="pay"><div class="top2"><div class="pn"><b>'+esc(d.ten)+'</b>'+(d.loaiHD&&!_coNhom?' <span class="tag mut">'+esc(d.loaiHD)+'</span>':'')+(d.giamTru?' <span class="tag ok">ưu đãi −'+fmtTr(d.giamTru)+'</span>':'')
       +'<div class="d">'+(d.ngayDenHan?'Hạn: '+ddmm(d.ngayDenHan):'')+(d.daThu>0&&!done?' · đã thu '+fmtTr(d.daThu):'')+'</div></div>'
       +'<div class="amt"><div class="big">'+fmtTr(d.giaTri)+'</div>'+tag+'</div></div>'
       +'<div class="cf-row">'+confCtrl('Đợt thu', d.id||d.ten)+'</div></div>';
