@@ -246,9 +246,9 @@
 
 <!-- ==================== LOGIN ==================== -->
 <div id="login">
-  <div class="logo">MDC</div>
-  <h1>CỔNG KHÁCH HÀNG</h1>
-  <div class="sub">Mộc Đông Châu · Thiết kế – Sản xuất – Thi công nội thất.<br>Nhập số điện thoại đã đăng ký để theo dõi tiến độ dự án của bạn.</div>
+  <div class="logo" id="dvLogoLogin">MDC</div>
+  <h1 id="dvPortalTen">CỔNG KHÁCH HÀNG</h1>
+  <div class="sub"><span id="dvSubLogin">Mộc Đông Châu · Thiết kế – Sản xuất – Thi công nội thất.</span><br>Nhập số điện thoại đã đăng ký để theo dõi tiến độ dự án của bạn.</div>
   <div class="card-login">
     <label for="sdt">Số điện thoại</label>
     <input id="sdt" type="tel" inputmode="tel" placeholder="Vd: 0905 123 456" autocomplete="tel" onkeydown="if(event.key==='Enter')doLogin()">
@@ -266,7 +266,7 @@
 <!-- ==================== APP ==================== -->
 <div id="app" class="hide">
   <header class="top"><div class="wrap">
-    <div class="brand"><div class="b">MDC</div><div class="t"><b>MỘC ĐÔNG CHÂU</b><br>Cổng khách hàng</div></div>
+    <div class="brand"><div class="b" id="dvLogoTop">MDC</div><div class="t"><b id="dvTenTop">MỘC ĐÔNG CHÂU</b><br><span id="dvPortalTop">Cổng khách hàng</span></div></div>
     <div class="who"><b id="whoName">—</b><span id="whoPhone" style="color:#C9B48F"></span></div>
     <button class="lo" onclick="logout()">Đổi số</button>
   </div></header>
@@ -314,10 +314,17 @@ var DATA=null, CURDA=0, CURTAB='tongquan', CONF={}, PENDING=null, SIGN=null, LBO
 var IS_DEMO=(new URLSearchParams(location.search)).get('demo');
 
 /* ======================= HELPERS ======================= */
-function fmtTr(n){ n=Number(n)||0; var s=n<0?'-':''; n=Math.abs(n);
-  if(n>=1e9) return s+(n/1e9).toFixed(2).replace(/\.?0+$/,'')+' tỷ';
-  if(n>=1e6) return s+(n/1e6).toFixed(n>=1e7?0:1).replace(/\.0$/,'')+' tr';
-  return s+n.toLocaleString('vi-VN'); }
+/* ★ v6.26 — thương hiệu theo Hồ sơ đơn vị (backend gửi kèm DATA.donVi; nhớ lần trước để hiện ngay ở màn đăng nhập) */
+function dvP(){ var d=(typeof DATA!=='undefined' && DATA && DATA.donVi)||null; if(!d){ try{ d=JSON.parse(localStorage.getItem('mdc_portal_dv')||'null'); }catch(e){} }
+  d=d||{}; return {ten:d.ten||'CÔNG TY TNHH NỘI THẤT MỘC ĐÔNG CHÂU', tenTM:d.tenTM||'MDC Interior', tenGoi:d.tenGoi||'Mộc Đông Châu', vietTat:d.vietTat||'MDC', slogan:d.slogan||'Thiết kế · Sản xuất · Thi công nội thất', logo:d.logo||'', dienThoai:d.dienThoai||'', email:d.email||'', tenPortal:d.tenPortal||'Cổng khách hàng'}; }
+function dvApDung(){ var d=dvP(), lg=d.logo?'<img src="'+esc(d.logo)+'" alt="" style="width:100%;height:100%;object-fit:contain">':esc(d.vietTat);
+  try{ document.title=d.vietTat+' · '+d.tenPortal; }catch(e){}
+  var set=function(id,h,txt){ var e=document.getElementById(id); if(e){ if(txt) e.textContent=h; else e.innerHTML=h; } };
+  set('dvLogoLogin',lg); set('dvLogoTop',lg); set('dvPortalTen',d.tenPortal.toUpperCase(),1); set('dvSubLogin',d.tenGoi+' · '+d.slogan+'.',1); set('dvTenTop',String(d.tenGoi||d.tenTM).toUpperCase(),1); set('dvPortalTop',d.tenPortal,1);
+  if(d.logo){ ['dvLogoLogin','dvLogoTop'].forEach(function(id){ var e=document.getElementById(id); if(e){ e.style.background='#fff'; e.style.padding='3px'; } }); }
+  try{ if(typeof DATA!=='undefined' && DATA && DATA.donVi) localStorage.setItem('mdc_portal_dv', JSON.stringify(DATA.donVi)); }catch(e){} }
+try{ document.addEventListener('DOMContentLoaded', dvApDung); }catch(e){}
+function fmtTr(n){ n=Math.round(Number(n)||0); var s=n<0?'-':''; return s+String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' đ'; }   /* ★ v6.25 — số tiền đủ đến hàng đơn vị */
 function fmtVND(n){ return (Number(n)||0).toLocaleString('vi-VN')+' đ'; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 function parseD(s){ if(!s) return null; var t=new Date(s); return isNaN(t)?null:t; }
@@ -355,6 +362,7 @@ function logout(){ try{ sessionStorage.removeItem('mdc_portal_sdt'); }catch(e){}
 function renderApp(){
   document.getElementById('login').classList.add('hide');
   document.getElementById('app').classList.remove('hide');
+  try{ dvApDung(); }catch(e){}   /* ★ v6.26 */
   document.getElementById('whoName').textContent=DATA.khach.ten||'Quý khách';
   document.getElementById('whoPhone').textContent=DATA.khach.sdt||'';
   var f=DATA.taiChinh||{};
@@ -368,7 +376,8 @@ function renderApp(){
     var sp='<div class="sumsplit" id="sumSplit">'
       +(f.tk.n?'<span>HĐ Thiết kế: <b>'+fmtTr(f.tk.giaTri)+'</b> · đã TT '+fmtTr(f.tk.daThu)+'</span>':'')
       +(f.tc.n?'<span>HĐ Thi công: <b>'+fmtTr(f.tc.giaTri)+'</b> · đã TT '+fmtTr(f.tc.daThu)+'</span>':'')
-      +(f.uuDai?'<span class="uu">🎁 Ưu đãi miễn phí thiết kế '+fmtTr(f.uuDai)+'</span>':'')+'</div>';
+      +(f.uuDai?'<span class="uu">🎁 Ưu đãi miễn phí thiết kế '+fmtTr(f.uuDai)+'</span>':'')
+      +(f.baoHanh&&f.baoHanh.conLai?'<span>🛡 Trong phần còn lại có <b>'+fmtTr(f.baoHanh.conLai)+'</b> giữ lại bảo hành — thanh toán khi hết hạn bảo hành</span>':'')+'</div>';
     document.getElementById('sum3').insertAdjacentHTML('afterend', sp);
   }
   document.getElementById('capNhat').textContent=DATA.capNhat?('Cập nhật: '+DATA.capNhat):'';
@@ -499,8 +508,8 @@ function contactCard(p){
   var nm=p.phuTrach||'Quản lý dự án MDC';
   var init=(nm.trim().split(/\s+/).pop()||'M').charAt(0).toUpperCase();
   return '<div class="card"><h3><span class="ic">📞</span> Liên hệ phụ trách</h3><div class="contact">'
-    +'<div class="av">'+esc(init)+'</div><div class="ci"><b>'+esc(nm)+'</b><div class="r">Quản lý dự án · Mộc Đông Châu</div></div></div>'
-    +'<div class="cbtns"><a class="pri" href="tel:">📱 Gọi điện</a><a href="https://zalo.me/" target="_blank" rel="noopener">💬 Zalo</a></div>'
+    +'<div class="av">'+esc(init)+'</div><div class="ci"><b>'+esc(nm)+'</b><div class="r">Quản lý dự án · '+esc(dvP().tenGoi||dvP().tenTM)+'</div></div></div>'
+    +'<div class="cbtns"><a class="pri" href="tel:'+esc(String(dvP().dienThoai||'').replace(/[^0-9+]/g,''))+'">📱 Gọi '+esc(dvP().dienThoai||'điện')+'</a><a href="https://zalo.me/'+esc(String(dvP().dienThoai||'').replace(/[^0-9]/g,''))+'" target="_blank" rel="noopener">💬 Zalo</a></div>'
     +'<div style="font-size:11px;color:var(--ink-faint);margin-top:10px;text-align:center">Mọi thắc mắc về tiến độ, thanh toán hay hồ sơ, vui lòng liên hệ trực tiếp PM phụ trách.</div></div>';
 }
 
@@ -616,8 +625,9 @@ function renderPayments(p){
     var done=d.conLai<=0; var dl=daysLeft(d.ngayDenHan);
     var tag=done?'<span class="tag ok">Đã thu đủ</span>':(dl!==null&&dl<0?'<span class="tag bad">Quá hạn</span>':(dl!==null&&dl<=7?'<span class="tag warn">Sắp đến hạn</span>':'<span class="tag mut">Chưa đến hạn</span>'));
     if(d.giamTru && !(d.giaTri>0)) tag='<span class="tag ok">Miễn thu</span>';   /* ★ v6.18 */
+    if(d.baoHanh && !done && !(dl!==null&&dl<0)) tag='<span class="tag mut">🛡 Giữ lại bảo hành</span>';   /* ★ v6.25 */
     return _grp+'<div class="pay"><div class="top2"><div class="pn"><b>'+esc(d.ten)+'</b>'+(d.loaiHD&&!_coNhom?' <span class="tag mut">'+esc(d.loaiHD)+'</span>':'')+(d.giamTru?' <span class="tag ok">ưu đãi −'+fmtTr(d.giamTru)+'</span>':'')
-      +'<div class="d">'+(d.ngayDenHan?'Hạn: '+ddmm(d.ngayDenHan):'')+(d.daThu>0&&!done?' · đã thu '+fmtTr(d.daThu):'')+'</div></div>'
+      +'<div class="d">'+(d.ngayDenHan?(d.baoHanh?'Hết hạn bảo hành: ':'Hạn: ')+ddmm(d.ngayDenHan):(d.baoHanh?'Thanh toán khi hết hạn bảo hành (tính từ ngày bàn giao)':''))+(d.daThu>0&&!done?' · đã thu '+fmtTr(d.daThu):'')+'</div></div>'
       +'<div class="amt"><div class="big">'+fmtTr(d.giaTri)+'</div>'+tag+'</div></div>'
       +'<div class="cf-row">'+confCtrl('Đợt thu', d.id||d.ten)+'</div></div>';
   }).join('')+'</div>';
